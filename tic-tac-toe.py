@@ -3,115 +3,72 @@ BOT = -1 # O player
 
 RANGE = 5
 
-DEPTH = 4
+DEPTH = 5
 
 board = None
 
 # Evaluate the board: +1 if the human wins; -1 if the bot wins; 0 if it's a tie
-# def evaluate(board):
-#     # Check rows
-#     for i in range(RANGE):
-#         for j in range(RANGE - 3):
-#             if board[i][j] == board[i][j + 1] == board[i][j + 2] == board[i][j + 3]:
-#                 if board[i][j] == 'X':
-#                     return 1
-#                 elif board[i][j] == 'O':
-#                     return -1
-
-#     # Check columns
-#     for i in range(RANGE - 3):
-#         for j in range(RANGE):
-#             if board[i][j] == board[i + 1][j] == board[i + 2][j] == board[i + 3][j]:
-#                 if board[i][j] == 'X':
-#                     return 1
-#                 elif board[i][j] == 'O':
-#                     return -1
-
-#     # Check diagonals
-#     for i in range(RANGE - 3):
-#         for j in range(RANGE - 3):
-#             if board[i][j] == board[i + 1][j + 1] == board[i + 2][j + 2] == board[i + 3][j + 3]:
-#                 if board[i][j] == 'X':
-#                     return 1
-#                 elif board[i][j] == 'O':
-#                     return -1
-    
-#     for i in range(RANGE - 3):
-#         for j in range(3, RANGE):
-#             if board[i][j] == board[i + 1][j - 1] == board[i + 2][j - 2] == board[i + 3][j - 3]:
-#                 if board[i][j] == 'X':
-#                     return 1
-#                 elif board[i][j] == 'O':
-#                     return -1
-
-#     # Check for a tie
-#     for row in board:
-#         if ' ' in row:
-#             # If there's still an empty cell, the game is not over
-#             return 0
-    
-#     # If no winner and no empty cells left, it's a tie
-#     return 0
-
 def evaluate(board):
-    X_wins = 0
-    O_wins = 0
-    empty_cells = 0
-
-    # Count winning possibilities
     # Check rows
     for i in range(RANGE):
         for j in range(RANGE - 3):
             if board[i][j] == board[i][j + 1] == board[i][j + 2] == board[i][j + 3]:
                 if board[i][j] == 'X':
-                    X_wins += 1
+                    return 1
                 elif board[i][j] == 'O':
-                    O_wins += 1
+                    return -1
 
     # Check columns
     for i in range(RANGE - 3):
         for j in range(RANGE):
             if board[i][j] == board[i + 1][j] == board[i + 2][j] == board[i + 3][j]:
                 if board[i][j] == 'X':
-                    X_wins += 1
+                    return 1
                 elif board[i][j] == 'O':
-                    O_wins += 1
+                    return -1
 
     # Check diagonals
     for i in range(RANGE - 3):
         for j in range(RANGE - 3):
             if board[i][j] == board[i + 1][j + 1] == board[i + 2][j + 2] == board[i + 3][j + 3]:
                 if board[i][j] == 'X':
-                    X_wins += 1
+                    return 1
                 elif board[i][j] == 'O':
-                    O_wins += 1
+                    return -1
     
     for i in range(RANGE - 3):
         for j in range(3, RANGE):
             if board[i][j] == board[i + 1][j - 1] == board[i + 2][j - 2] == board[i + 3][j - 3]:
                 if board[i][j] == 'X':
-                    X_wins += 1
+                    return 1
                 elif board[i][j] == 'O':
-                    O_wins += 1
+                    return -1
+                
+    # Check for a tie
+    if all(cell != ' ' for row in board for cell in row):
+        return 0
 
-    # Count empty cells
-    for row in board:
-        empty_cells += row.count(' ')
+    # Count the number of X and O
+    count_X = sum(row.count('X') for row in board)
+    count_O = sum(row.count('O') for row in board)
 
-    # Calculate heuristic score
-    heuristic_score = (X_wins - O_wins) * 10 + empty_cells
-
-    return heuristic_score
+    if count_X > count_O:
+        return 0.5
+    elif count_O > count_X:
+        return -0.5
+    return 0
 
 def print_board(board):
-    for row in board:
-        print(" | ".join(row))
-        print("-" * (4 * RANGE - 1))
+    print("   " + "   ".join(str(i) for i in range(RANGE)))
+    for i, row in enumerate(board):
+        print(i, end="  ")
+        print(" | ".join(cell for cell in row))
+        if i < RANGE - 1:
+            print("  " + "-" * (4 * RANGE - 1))
 
 # Determine if a player has won
 def is_game_over(board):
-    evaluation = evaluate(board)
-    if evaluation != 0 or all(' ' not in row for row in board):
+    if evaluate(board) == 1 or evaluate(board) == -1:
         return True
     return False
 
@@ -142,7 +99,7 @@ def minimax(board, depth, alpha, beta, maximizing_player):
                     score = minimax(board, depth - 1, alpha, beta, False)
                     undo_move(board, row, col)
                     max_score = max(max_score, score)
-                    alpha = max(alpha, score)
+                    alpha = max(alpha, max_score)
                     if beta <= alpha:
                         break
             if beta <= alpha:
@@ -157,7 +114,7 @@ def minimax(board, depth, alpha, beta, maximizing_player):
                     score = minimax(board, depth - 1, alpha, beta, True)
                     undo_move(board, row, col)
                     min_score = min(min_score, score)
-                    beta = min(beta, score)
+                    beta = min(beta, min_score)
                     if beta <= alpha:
                         break
                 if beta <= alpha:
@@ -167,15 +124,15 @@ def minimax(board, depth, alpha, beta, maximizing_player):
 # Find the best move using the Alpha-Beta Pruning algorithm
 # Bot is minimizing player
 def find_best_move(board):
-    best_eval = float('-inf')
+    best_eval = float('inf')
     best_move = None
     for row in range(RANGE):
         for col in range(RANGE):
             if board[row][col] == ' ':
-                make_move(board, row, col, 'X')
-                eval = minimax(board, DEPTH, float('-inf'), float('inf'), False)
+                make_move(board, row, col, 'O')
+                eval = minimax(board, DEPTH, float('-inf'), float('inf'), True)
                 undo_move(board, row, col)
-                if eval > best_eval:
+                if eval < best_eval:
                     best_eval = eval
                     best_move = (row, col)
     return best_move
@@ -206,7 +163,7 @@ def main():
         if is_game_over(board):
             break
 
-        print("Bot's move...")
+        print("Bot is thinking...")
         
         bot_row, bot_col = find_best_move(board)
         make_move(board, bot_row, bot_col, 'O')
