@@ -129,21 +129,16 @@ def minimax(board, depth, alpha, beta, maximizing_player):
 def find_best_move(board):
     best_eval = float('inf')
     best_move = None
-    depth = DEPTH
     start_time = time.time()
-    while True:  # Keep increasing depth until a solution is found
-        for row in range(RANGE):
-            for col in range(RANGE):
-                if board[row][col] == ' ':
-                    make_move(board, row, col, 'O')
-                    eval = minimax(board, depth, float('-inf'), float('inf'), True)
-                    undo_move(board, row, col)
-                    if eval < best_eval:
-                        best_eval = eval
-                        best_move = (row, col)
-        depth -= 1 # Iterative deepening
-        if depth < 0:
-            break
+    for row in range(RANGE):
+        for col in range(RANGE):
+            if board[row][col] == ' ':
+                make_move(board, row, col, 'O')
+                eval = minimax(board, DEPTH, float('-inf'), float('inf'), True)
+                undo_move(board, row, col)
+                if eval < best_eval:
+                    best_eval = eval
+                    best_move = (row, col)
     stop_time = time.time()
     print(f"Bot took {stop_time - start_time:.2f} seconds to make a move.")
     return best_move
